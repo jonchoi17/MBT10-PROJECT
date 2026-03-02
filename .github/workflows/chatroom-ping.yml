@@ -1,0 +1,37 @@
+name: Chatroom Auto-Ping (Claude)
+
+on:
+  push:
+    paths:
+      - "chatroom.md"
+
+permissions:
+  contents: write
+
+jobs:
+  respond:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Open chatroom.md.
+            Find the newest line starting with "USER:".
+            Append a response at the end starting with "CC:".
+            Keep the reply short and actionable.
+            Do not delete existing content.
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add chatroom.md
+          git commit -m "Claude reply"
+          git push
